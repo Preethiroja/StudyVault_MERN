@@ -1,0 +1,15 @@
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+body{background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;}
+.container{max-width:1200px;margin:auto;padding:20px;}
+.card{background:white;padding:20px;border-radius:12px;box-shadow:0 15px 30px rgba(0,0,0,0.15);margin-bottom:20px;}
+.navbar{background:white;padding:12px 25px;display:flex;justify-content:space-between;align-items:center;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.15);margin-bottom:20px;}
+.nav-title{font-size:22px;font-weight:bold;color:#667eea;}
+.logout-btn{background:#e53e3e;padding:8px 14px;font-size:14px;border:none;border-radius:6px;color:white;cursor:pointer;}
+.logout-btn:hover{background:#c53030;}
+.tabs{display:flex;gap:10px;margin-bottom:20px;}
+.tab{padding:10px 20px;background:white;border-radius:6px;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+.tab.active{background:#667eea;color:white;}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
+input,textarea{padding:10px;border-radius:6px;border:1px solid #ccc;width:100%;}
+button{padding:10px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;}
+button:hover{background:#5a67d8;}
