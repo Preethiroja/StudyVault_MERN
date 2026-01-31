@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const Note = require("../models/Note");
+const User = require("../models/User"); // 🚩 Added this import to access points
 const { generateSummaryAndQuiz } = require("../utils/ai");
 const auth = require("../middleware/authMiddleware");
 
 // GET: Fetch notes ONLY for the logged-in user
 router.get("/", auth, async (req, res) => {
   try {
-    // Uses req.user.id from the JWT token to filter notes
     const notes = await Note.find({ userId: req.user.id }).sort({ createdAt: -1 });
     res.json(notes);
   } catch (err) {
@@ -20,7 +20,6 @@ router.post("/", auth, async (req, res) => {
   try {
     const { title, content } = req.body;
 
-    // Creates the note linked to the authenticated user
     const note = await Note.create({
       title,
       content,
@@ -29,10 +28,12 @@ router.post("/", auth, async (req, res) => {
       quiz: "Pending..."
     });
 
-    // Respond immediately so the user doesn't wait for AI
+    // 🚩 ADDED THIS: Reward the user with 10 points for creating a note
+    await User.findByIdAndUpdate(req.user.id, { $inc: { points: 10 } });
+
     res.status(201).json(note);
 
-    // AI Processing in background
+    // AI Processing in background - UNCHANGED
     (async () => {
       try {
         const result = await generateSummaryAndQuiz(content);

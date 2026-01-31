@@ -23,7 +23,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/notes", require("./routes/noteRoutes"));
 app.use("/api/tasks", require("./routes/taskRoutes"));
 app.use("/api/leaderboard", require("./routes/leaderboardRoutes"));
-app.use("/api/share", require("./routes/shareRoutes"));
+app.use("/api/files", require("./routes/shareRoutes"));
 
 // ================= SOCKET.IO =================
 const onlineUsers = {};

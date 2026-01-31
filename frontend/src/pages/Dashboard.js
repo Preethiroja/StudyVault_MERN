@@ -111,20 +111,41 @@ export default function Dashboard({ token, logout }) {
 };
 
   const addTask = async () => {
-    if (!taskInput || !taskDate) return;
-    try {
-      await api.post(
-        "/tasks",
-        { title: taskInput, description: "", dueDate: taskDate },
-        { headers: { Authorization: token } }
-      );
-      setTaskInput("");
-      setTaskDate("");
-      loadTasks();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  if (!taskInput || !taskDate) return;
+  try {
+    const res = await api.post(
+      "/tasks",
+      { title: taskInput, description: "", dueDate: taskDate },
+      { headers: { Authorization: token } }
+    );
+    
+    // 🚩 FIX: Add the new task from the server response directly to your state
+    setTasks((prevTasks) => [...prevTasks, res.data]); 
+    
+    setTaskInput("");
+    setTaskDate("");
+    alert("Task added successfully!");
+  } catch (err) {
+    console.error("Failed to add task:", err);
+    alert("Error adding task. Check console.");
+  }
+};
+
+const deleteTask = async (taskId) => {
+  if (!window.confirm("Are you sure you want to delete this task?")) return;
+
+  try {
+    await api.delete(`/tasks/${taskId}`, {
+      headers: { Authorization: token },
+    });
+
+    // 🚩 Update the UI state immediately by filtering out the deleted task
+    setTasks(tasks.filter((t) => t._id !== taskId));
+  } catch (err) {
+    console.error("Failed to delete task:", err);
+    alert("Could not delete task.");
+  }
+};
 
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
@@ -140,19 +161,28 @@ export default function Dashboard({ token, logout }) {
 
   /* ================= NOTIFICATIONS ================= */
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      tasks.forEach((task) => {
-        const taskTime = new Date(task.dueDate);
-        if (!task.completed && Math.abs(taskTime - now) < 60000) {
-          new Notification(`⏰ Task Reminder: ${task.title}`, {
-            body: "Your task is due now!",
-          });
-        }
-      });
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [tasks]);
+  const interval = setInterval(() => {
+    const now = new Date().getTime(); // Use timestamps for accuracy
+    
+    tasks.forEach((task) => {
+      const taskTime = new Date(task.dueDate).getTime();
+      
+      // 🚩 FIX: Check if task is due in the NEXT minute or was due in the LAST minute
+      // and ensure it hasn't been "notified" yet
+      if (!task.completed && Math.abs(taskTime - now) < 60000) {
+        new Notification(`⏰ Task Reminder: ${task.title}`, {
+          body: "Your task is due now!",
+          icon: "/logo192.png" // Adding an icon helps some browsers trigger it
+        });
+        
+        // Optional: Mark as notified locally so it doesn't spam every interval
+        task.completed = true; 
+      }
+    });
+  }, 30000); // Check every 30 seconds instead of 60
+  
+  return () => clearInterval(interval);
+}, [tasks]);
 
   return (
     <div className="container">
@@ -283,27 +313,49 @@ export default function Dashboard({ token, logout }) {
   />
 )}
 
+
         {activeTab === "files" && <FileUploader token={token} />}
 
         {activeTab === "calendar" && (
-          <div className="calendar-grid">
-            <div className="card">
-              <h3>Task Manager</h3>
-              <input value={taskInput} onChange={(e) => setTaskInput(e.target.value)} placeholder="New Task" />
-              <input type="datetime-local" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} />
-              <button onClick={addTask}>Add Task</button>
-              <ul>
-                {tasks.map((t) => (
-                  <li key={t._id}>
-                    <span>{t.title}</span>
-                    <small>{new Date(t.dueDate).toLocaleString()}</small>
-                  </li>
-                ))}
-              </ul>
+  <div className="calendar-grid">
+    <div className="card">
+      <h3>Task Manager</h3>
+      <div className="task-input-group">
+        <input 
+          value={taskInput} 
+          onChange={(e) => setTaskInput(e.target.value)} 
+          placeholder="New Task" 
+        />
+        <input 
+          type="datetime-local" 
+          value={taskDate} 
+          onChange={(e) => setTaskDate(e.target.value)} 
+        />
+        <button onClick={addTask}>Add Task</button>
+      </div>
+
+      {/* 🚩 Optimized Task List with Delete Button */}
+      <ul className="task-list">
+        {tasks.map((t) => (
+          <li key={t._id} className="task-item">
+            <div className="task-info">
+              <strong>{t.title}</strong>
+              <small>{new Date(t.dueDate).toLocaleString()}</small>
             </div>
-            <div className="card"><Calendar /></div>
-          </div>
-        )}
+            <button 
+              className="delete-btn" 
+              onClick={() => deleteTask(t._id)}
+              title="Delete Task"
+            >
+              🗑️Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div className="card"><Calendar /></div>
+  </div>
+)}
 
         {activeTab === "leaderboard" && (
           <div className="card">
@@ -316,7 +368,7 @@ export default function Dashboard({ token, logout }) {
                 </li>
               ))}
             </ul>
-          </div>
+          </div>  
         )}
       </div>
     </div>

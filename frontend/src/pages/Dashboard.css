@@ -1,508 +1,693 @@
-/* ================= DASHBOARD LAYOUT ================= */
-body {
-  background: linear-gradient(135deg, #0f94a5, #1a7eca, #1893db);
-  min-height: 100vh;
-}
+  /* ================= DASHBOARD LAYOUT ================= */
+  body {
+    background: linear-gradient(135deg, #0f94a5, #1a7eca, #1893db);
+    min-height: 100vh;
+  }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 20px;
-  font-family: 'Poppins', sans-serif;
-  color: #2d3436;
-}
-
-/* ================= TABS NAVIGATION ================= */
-.tabs {
+  .container {
+  padding-top: 100px; 
+  margin-left: 260px; 
+  margin-right: 20px; 
   display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 35px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  padding: 12px;
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 25px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+  /* ================= TABS NAVIGATION ================= */
+  /* ================= FIXED LEFT SIDEBAR ================= */
+.tabs {
+  position: fixed; 
+  left: 20px;
+  top: 100px; /* Sits exactly below the navbar line */
+  bottom: 20px;
+  width: 260px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(15px);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 15px;
+  z-index: 1000;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .tab {
-  padding: 12px 22px;
+  padding: 14px 20px;
   cursor: pointer;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #57606f;
-  transition: all 0.3s ease;
-  letter-spacing: 0.5px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748b; /* Sleek slate color */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .tab:hover {
-  background: rgba(15, 185, 177, 0.15);
+  background: rgba(15, 185, 177, 0.1);
   color: #0fb9b1;
-  transform: translateY(-2px);
+  padding-left: 28px; /* High-end interactive slide effect */
 }
 
 .tab.active {
-  background: linear-gradient(135deg, #0fb9b1, #45aaf2);
+  background: linear-gradient(135deg, #0fb9b1, #1a7eca);
   color: white;
-  box-shadow: 0 8px 20px rgba(15, 185, 177, 0.4);
+  box-shadow: 0 10px 20px rgba(15, 185, 177, 0.3);
 }
 
-/* ================= CARDS & GRID ================= */
-.card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+/* ================= CONTENT ADJUSTMENT ================= */
+/* You MUST apply this to your .tab-content container 
+   to prevent it from being hidden under the sidebar */
+.tab-content {
+  margin-top: -40px;
+  margin-left: 130px; 
+  padding: 0 20px 0 0;
+  width: calc(100% - 100px);
+}
+
+/* Responsive: Hide or collapse sidebar on small screens */
+@media (max-width: 1024px) {
+  .tabs {
+    position: relative;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    top: 0;
+    left: 0;
+    margin-bottom: 20px;
+  }
+  .tab-content {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+  /* ================= CARDS & GRID ================= */
+  .card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+  }
+
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 25px;
+  }
+
+  /* ================= FORMS & INPUTS ================= */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 15px;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    background: #f1f5f9;
+    font-size: 14px;
+    transition: 0.3s;
+    outline: none;
+  }
+
+  input:focus,
+  textarea:focus {
+    border-color: #0fb9b1;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(15, 185, 177, 0.15);
+  }
+
+  button {
+    padding: 15px 28px;
+    background: linear-gradient(135deg, #0fb9b1, #45aaf2);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+  }
+
+  button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(15, 185, 177, 0.45);
+  }
+
+  /* ================= LISTS (LEADERBOARD/TASKS) ================= */
+  ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 25px;
+  }
+
+  li {
+    background: linear-gradient(135deg, #ffffff, #f1f5f9);
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 6px solid #0fb9b1;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+  }
+
+  /* ================= AI CONTENT STYLING ================= */
+  h3 {
+    margin-bottom: 18px;
+    color: #0b3c5d;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  pre {
+    background: linear-gradient(135deg, #1e272e, #2f3640);
+    color: #fbc531;
+    padding: 18px;
+    border-radius: 14px;
+    font-size: 13px;
+    overflow-x: auto;
+    margin-top: 12px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  /* ================= CALENDAR CUSTOMIZATION ================= */
+  .react-calendar {
+    width: 100% !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    font-family: 'Inter', sans-serif !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    padding: 20px !important;
+  }
+  .react-calendar__navigation button {
+    color: #0984e3 !important;
+    min-width: 44px !important;
+    background: none !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+  }
+  .react-calendar__month-view__weekdays {
+    text-transform: uppercase !important;
+    font-weight: bold !important;
+    font-size: 0.8rem !important;
+    color: #2d3436 !important; /* 🚩 Changed to dark gray/black for visibility */
+    text-decoration: none !important;
+  }
+  .react-calendar__tile {
+    padding: 15px 10px !important;
+    background: none !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+    color: #000000 !important; /* 🚩 This forces the numbers to be BLACK */
+  }
+  .react-calendar__tile:enabled:hover,
+  .react-calendar__tile:enabled:focus {
+    background-color: #e1f5fe !important;
+    color: #0288d1 !important;
+  }
+  .react-calendar__tile--now {
+    background: #ffeaa7 !important; /* The yellow highlight you have currently */
+    border-radius: 12px !important;
+    font-weight: bold !important;
+    color: #d63031 !important; /* Red text for today's date */
+  }
+  .react-calendar__tile--active {
+    background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%) !important;
+    color: white !important; /* White is okay here because the background is dark blue */
+    box-shadow: 0 4px 15px rgba(58, 123, 213, 0.4) !important;
+  }
+  .react-calendar__tile:focus {
+    outline: none !important;
+  }
+  .react-calendar__month-view__days__day--neighboringMonth {
+    visibility: hidden !important; 
+  }
+  .react-calendar__month-view__days__day--weekend:nth-child(7n) {
+    color: #d63031 !important; /* Bold Red */
+    font-weight: bold !important;
+  }
+  .react-calendar__month-view__days__day--weekend:nth-child(6n) {
+    color: #000000 !important;
+  }
+
+  /* ================= USER PROFILE CARD ================= */
+    
+  .profile-card {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
   border-radius: 24px;
-  padding: 28px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
-  margin-bottom: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 25px 35px;
+  
+  /* CHANGE THIS: Increase the top margin to create space from the top */
+  margin-top: 80px; 
+  margin-bottom: 40px; 
+  margin-left: 125px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  z-index: 1; 
 }
-
-.card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
-}
-
-.notes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-  margin-top: 25px;
-}
-
-/* ================= FORMS & INPUTS ================= */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-input,
-textarea {
-  width: 100%;
-  padding: 15px;
-  border-radius: 14px;
-  border: 2px solid transparent;
-  background: #f1f5f9;
-  font-size: 14px;
-  transition: 0.3s;
-  outline: none;
-}
-
-input:focus,
-textarea:focus {
-  border-color: #0fb9b1;
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(15, 185, 177, 0.15);
-}
-
-button {
-  padding: 15px 28px;
-  background: linear-gradient(135deg, #0fb9b1, #45aaf2);
-  color: white;
-  border: none;
-  border-radius: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s ease;
-}
-
-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 30px rgba(15, 185, 177, 0.45);
-}
-
-/* ================= LISTS (LEADERBOARD/TASKS) ================= */
-ul {
-  list-style: none;
-  padding: 0;
-  margin-top: 25px;
-}
-
-li {
-  background: linear-gradient(135deg, #ffffff, #f1f5f9);
-  padding: 16px;
-  border-radius: 14px;
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-left: 6px solid #0fb9b1;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
-}
-
-/* ================= AI CONTENT STYLING ================= */
-h3 {
-  margin-bottom: 18px;
-  color: #0b3c5d;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-pre {
-  background: linear-gradient(135deg, #1e272e, #2f3640);
-  color: #fbc531;
-  padding: 18px;
-  border-radius: 14px;
-  font-size: 13px;
-  overflow-x: auto;
-  margin-top: 12px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-/* ================= CALENDAR CUSTOMIZATION ================= */
-.react-calendar {
-  width: 100% !important;
-  border: none !important;
-  font-family: 'Poppins', sans-serif !important;
-  border-radius: 18px;
-  padding: 15px;
-  background: rgba(192, 194, 194, 0.99);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-}
-
-.react-calendar__tile--active {
-  background: linear-gradient(135deg, #0fb9b1, #45aaf2) !important;
-  border-radius: 10px;
-  color: white !important;
-}
-
-/* ================= USER PROFILE CARD ================= */
-.profile-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #ffffff, #f1faff);
-  border-radius: 20px;
-  padding: 25px;
-  margin-bottom: 25px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-}
-
 .profile-left {
   display: flex;
   align-items: center;
   gap: 20px;
+  flex: 1 1 300px; /* Base size before wrapping */
 }
 
 .avatar {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #0fb9b1, #45aaf2);
+  width: 65px;
+  height: 65px;
+  border-radius: 18px; /* Squircle looks more modern than circle */
+  background: linear-gradient(135deg, #0fb9b1, #1a7eca);
   color: white;
-  font-size: 32px;
-  font-weight: bold;
+  font-size: 28px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8px 20px rgba(15, 185, 177, 0.2);
 }
 
 .profile-left h2 {
   margin: 0;
+  font-size: 22px;
   color: #0b3c5d;
+  font-weight: 800;
 }
 
 .email {
   font-size: 14px;
-  color: #636e72;
+  color: #64748b;
+  margin-top: 4px;
 }
 
 .profile-right {
   display: flex;
-  gap: 20px;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .profile-box {
   background: white;
-  padding: 15px 20px;
-  border-radius: 15px;
+  padding: 12px 20px;
+  border-radius: 16px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+  min-width: 140px;
+  transition: transform 0.3s ease;
+}
+
+.profile-box:hover {
+  transform: translateY(-3px);
+  border-color: #0fb9b1;
 }
 
 .profile-box span {
   display: block;
-  font-size: 13px;
-  color: #636e72;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
 }
 
 .profile-box strong {
-  font-size: 18px;
+  font-size: 16px;
   color: #0fb9b1;
+  font-weight: 800;
 }
 
-/* ================= WHITEBOARD SPECIFIC FIX ================= */
-/* This container forces a dark background so white ink is visible */
-.whiteboard-container {
-  background: #1e293b !important; /* Solid Dark Slate */
-  border: 4px solid #334155;
-  border-radius: 20px;
-  box-shadow: inset 0 4px 15px rgba(0,0,0,0.4);
-  margin-top: 20px;
-  padding: 0;
-  overflow: hidden;
-  cursor: crosshair;
-}
+  
 
-/* Ensures the canvas takes up the full space of the dark container */
-canvas {
-  display: block;
-  background: transparent; 
-  width: 100%;
-}
-/* ================= WHITEBOARD WRAPPER & TOOLBAR ================= */
-.whiteboard-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+  /* ================= WHITEBOARD SPECIFIC FIX ================= */
+  /* This container forces a dark background so white ink is visible */
+  .whiteboard-container {
+    background: #1e293b !important; /* Solid Dark Slate */
+    border: 4px solid #334155;
+    border-radius: 20px;
+    box-shadow: inset 0 4px 15px rgba(0,0,0,0.4);
+    margin-top: 20px;
+    padding: 0;
+    overflow: hidden;
+    cursor: crosshair;
+  }
 
-.whiteboard-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
+  /* Ensures the canvas takes up the full space of the dark container */
+  canvas {
+    display: block;
+    background: transparent; 
+    width: 100%;
+  }
+  /* ================= WHITEBOARD WRAPPER & TOOLBAR ================= */
+  .whiteboard-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
-.control-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  .whiteboard-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 
-.whiteboard-controls button {
-  padding: 8px 14px;
-  font-size: 12px;
-  background: #334155;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: white;
-  transition: 0.2s;
-}
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-.whiteboard-controls button.active {
-  background: #0fb9b1;
-  border-color: #0fb9b1;
-}
+  .whiteboard-controls button {
+    padding: 8px 14px;
+    font-size: 12px;
+    background: #334155;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    transition: 0.2s;
+  }
 
-.whiteboard-controls button:hover {
-  background: #45aaf2;
-}
+  .whiteboard-controls button.active {
+    background: #0fb9b1;
+    border-color: #0fb9b1;
+  }
 
-.whiteboard-controls input[type="color"] {
-  width: 35px;
-  height: 35px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
+  .whiteboard-controls button:hover {
+    background: #45aaf2;
+  }
 
-.whiteboard-controls input[type="range"] {
-  width: 80px;
-}
+  .whiteboard-controls input[type="color"] {
+    width: 35px;
+    height: 35px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
 
-.clear-btn {
-  background: #ff5e57 !important;
-}
+  .whiteboard-controls input[type="range"] {
+    width: 80px;
+  }
 
-/* Ensure the canvas fills the dark container from your screenshot fix */
-.whiteboard-container canvas {
-  width: 100%;
-  height: 500px;
-  display: block;
-  background: transparent;
-}
-.download-btn {
-  background: linear-gradient(135deg, #45aaf2, #2d98da) !important;
-  color: white;
-  font-weight: bold;
-}
+  .clear-btn {
+    background: #ff5e57 !important;
+  }
 
-.download-btn:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-}
+  /* Ensure the canvas fills the dark container from your screenshot fix */
+  .whiteboard-container canvas {
+    width: 100%;
+    height: 500px;
+    display: block;
+    background: transparent;
+  }
+  .download-btn {
+    background: linear-gradient(135deg, #45aaf2, #2d98da) !important;
+    color: white;
+    font-weight: bold;
+  }
 
-.whiteboard-controls .control-group:last-child {
-  margin-left: auto; /* Pushes Download/Clear to the right */
-} 
+  .download-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+
+  .whiteboard-controls .control-group:last-child {
+    margin-left: auto; /* Pushes Download/Clear to the right */
+  } 
 
 
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
+  /* ================= RESPONSIVE ================= */
+  @media (max-width: 768px) {
+    .tabs {
+      flex-direction: row;
+      overflow-x: auto;
+      justify-content: flex-start;
+    }
+
+    .tab {
+      flex: 0 0 auto;
+    }
+  }
+
+  /* Dashboard.css */
+  /* Container for each note */
+  .note-card {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    border-left: 5px solid #0fb9b1; /* Matches your theme color */
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  .note-card h3 {
+    color: #0b3c5d;
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+  }
+
+  /* AI Summary Styling */
+  .summary-section {
+    background: rgba(15, 185, 177, 0.08); /* Light teal tint */
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px dashed #0fb9b1;
+  }
+
+  .summary-section b {
+    color: #0fb9b1;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+  }
+
+  .summary-section p {
+    margin-top: 8px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #2d3436;
+  }
+
+  /* Quiz Styling (The 'pre' tag) */
+  .note-card pre {
+    background: #2d3436; /* Dark slate background */
+    color: #fbc531; /* Golden yellow text for contrast */
+    padding: 20px;
+    border-radius: 14px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    
+    /* CRITICAL: These prevent the text from going off-screen */
+    white-space: pre-wrap;       
+    word-wrap: break-word;       
+    overflow-x: hidden; 
+    
+    border: 1px solid #636e72;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  /* Adding a nice 'Quiz' label before the pre tag */
+  .note-card pre::before {
+    content: "📝 INTERACTIVE QUIZ";
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-family: 'Poppins', sans-serif;
+    color: #45aaf2;
+    font-size: 0.75rem;
+    border-bottom: 1px solid #4b5563;
+    padding-bottom: 5px;
+  }
+  @keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+  }
+
+  .summary-section p:empty::before, 
+  .summary-section p:contains('Generating...') {
+    animation: pulse 1.5s infinite;
+    color: #0fb9b1;
+    font-style: italic;
+  }
+  /* Dashboard.css additions */
+
+  .note-card {
+    border-left: 5px solid #0fb9b1;
+    transition: transform 0.2s;
+  }
+
+  .note-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .summary-section {
+    background: rgba(15, 185, 177, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    margin: 10px 0;
+    border: 1px solid rgba(15, 185, 177, 0.1);
+  }
+
+  .pulse-text {
+    color: #0fb9b1;
+    font-style: italic;
+    animation: pulse-op 1.5s infinite;
+  }
+
+  @keyframes pulse-op {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+  }
+
+  /* THE QUIZ BOX: Makes it look like a coding console */
+  .quiz-box {
+    background: #2d3436;
+    color: #fbc531;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    white-space: pre-wrap; /* CRITICAL: This allows line breaks */
+    word-wrap: break-word;
+    border: 1px solid #636e72;
+    margin-top: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .loader-mini {
+    font-size: 11px;
+    color: #0fb9b1;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .graph-container {
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+  }
+
+  /* Add a Floating Legend */
+  .graph-legend {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 12px;
+    pointer-events: none;
+  }
+  /* ================= IMPROVED GLOBAL SETTINGS ================= */
+  .container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px; /* Reduced for mobile comfort */
+    box-sizing: border-box; /* 🚩 Essential: prevents width overflow */
+  }
+
+  /* ================= TABS NAVIGATION (RESPONSIVE) ================= */
   .tabs {
-    flex-direction: row;
-    overflow-x: auto;
-    justify-content: flex-start;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 10px;
+    flex-wrap: wrap; /* 🚩 Prevents overlapping buttons in image_a95400.jpg */
   }
 
   .tab {
-    flex: 0 0 auto;
+    flex: 1 1 auto; /* Buttons fill space evenly on mobile */
+    text-align: center;
+    min-width: 120px; /* Ensures text doesn't squash */
+    padding: 10px;
   }
-}
 
-/* Dashboard.css */
-/* Container for each note */
-.note-card {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  border-left: 5px solid #0fb9b1; /* Matches your theme color */
-  background: rgba(255, 255, 255, 0.95);
-}
+  /* ================= FILE VAULT (RESPONSIVE) ================= */
+  .file-item {
+    display: flex;
+    flex-wrap: wrap; /* 🚩 Prevents horizontal overflow in image_aa2cdb.jpg */
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px;
+    border-radius: 12px;
+  }
 
-.note-card h3 {
-  color: #0b3c5d;
-  margin-top: 0;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
+  .file-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
 
-/* AI Summary Styling */
-.summary-section {
-  background: rgba(15, 185, 177, 0.08); /* Light teal tint */
-  padding: 15px;
-  border-radius: 12px;
-  border: 1px dashed #0fb9b1;
-}
+  .share-input {
+    width: 100%; /* Default for mobile */
+    max-width: 200px; /* Constrain for desktop */
+  }
 
-.summary-section b {
-  color: #0fb9b1;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-}
+  /* ================= MOBILE BREAKPOINTS ================= */
+  @media (max-width: 768px) {
+    .profile-card {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .profile-left {
+      flex-direction: column;
+      justify-content: center;
+    }
 
-.summary-section p {
-  margin-top: 8px;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: #2d3436;
-}
+    .profile-right {
+      justify-content: center;
+      width: 100%;
+    }
 
-/* Quiz Styling (The 'pre' tag) */
-.note-card pre {
-  background: #2d3436; /* Dark slate background */
-  color: #fbc531; /* Golden yellow text for contrast */
-  padding: 20px;
-  border-radius: 14px;
-  font-family: 'Fira Code', 'Courier New', monospace;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  
-  /* CRITICAL: These prevent the text from going off-screen */
-  white-space: pre-wrap;       
-  word-wrap: break-word;       
-  overflow-x: hidden; 
-  
-  border: 1px solid #636e72;
-  box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
-}
+    .profile-box {
+      flex: 1; /* Stats boxes take equal width on small screens */
+    }
 
-/* Adding a nice 'Quiz' label before the pre tag */
-.note-card pre::before {
-  content: "📝 INTERACTIVE QUIZ";
-  display: block;
-  margin-bottom: 10px;
-  font-weight: bold;
-  font-family: 'Poppins', sans-serif;
-  color: #45aaf2;
-  font-size: 0.75rem;
-  border-bottom: 1px solid #4b5563;
-  padding-bottom: 5px;
-}
-@keyframes pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
-}
-
-.summary-section p:empty::before, 
-.summary-section p:contains('Generating...') {
-  animation: pulse 1.5s infinite;
-  color: #0fb9b1;
-  font-style: italic;
-}
-/* Dashboard.css additions */
-
-.note-card {
-  border-left: 5px solid #0fb9b1;
-  transition: transform 0.2s;
-}
-
-.note-card:hover {
-  transform: translateY(-3px);
-}
-
-.summary-section {
-  background: rgba(15, 185, 177, 0.05);
-  padding: 12px;
-  border-radius: 8px;
-  margin: 10px 0;
-  border: 1px solid rgba(15, 185, 177, 0.1);
-}
-
-.pulse-text {
-  color: #0fb9b1;
-  font-style: italic;
-  animation: pulse-op 1.5s infinite;
-}
-
-@keyframes pulse-op {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
-}
-
-/* THE QUIZ BOX: Makes it look like a coding console */
-.quiz-box {
-  background: #2d3436;
-  color: #fbc531;
-  padding: 15px;
-  border-radius: 10px;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  white-space: pre-wrap; /* CRITICAL: This allows line breaks */
-  word-wrap: break-word;
-  border: 1px solid #636e72;
-  margin-top: 8px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.loader-mini {
-  font-size: 11px;
-  color: #0fb9b1;
-  cursor: pointer;
-  font-weight: bold;
-}
-.graph-container {
-  position: relative;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  overflow: hidden;
-}
-
-/* Add a Floating Legend */
-.graph-legend {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  padding: 15px;
-  border-radius: 12px;
-  font-size: 12px;
-  pointer-events: none;
-}
+    .notes-grid {
+      grid-template-columns: 1fr; /* One note per row on phones */
+    }
+    
+    .whiteboard-container canvas {
+      height: 300px; /* Smaller whiteboard for mobile devices */
+    }
+  }
