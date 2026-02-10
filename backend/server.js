@@ -26,15 +26,26 @@ app.use("/api/leaderboard", require("./routes/leaderboardRoutes"));
 app.use("/api/files", require("./routes/shareRoutes"));
 
 // ================= SOCKET.IO =================
-const onlineUsers = {};
+const onlineUsers = {}; // Key: socket.id, Value: username
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  // 🚪 End Whiteboard for all in room
+  socket.on("end-whiteboard", ({ roomId }) => {
+    if (roomId) {
+      io.to(roomId).emit("whiteboard-ended");
+      io.in(roomId).socketsLeave(roomId);
+    }
+  });
+
   // 👤 User joins
   socket.on("join", ({ user }) => {
     onlineUsers[socket.id] = user;
-    io.emit("onlineUsers", Object.values(onlineUsers));
+    
+    // 🔥 FIX: Send only UNIQUE names to the frontend
+    const uniqueUsers = [...new Set(Object.values(onlineUsers))];
+    io.emit("onlineUsers", uniqueUsers);
   });
 
   // 💬 Chat message
@@ -47,15 +58,44 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("typing", user);
   });
 
-  // 🎨 Whiteboard drawing
-  socket.on("draw", (data) => {
-    socket.broadcast.emit("draw", data);
+  // 🎨 Whiteboard logic
+  socket.on("request-whiteboard", ({ from, toUser }) => {
+    const targetSocketId = Object.keys(onlineUsers).find(
+      (id) => onlineUsers[id] === toUser
+    );
+    if (targetSocketId) {
+      io.to(targetSocketId).emit("whiteboard-request-received", { from });
+    }
+  });
+
+  socket.on("accept-whiteboard", ({ from, to }) => {
+    const roomId = [from, to].sort().join("_");
+    const s1 = Object.keys(onlineUsers).find(id => onlineUsers[id] === from);
+    const s2 = Object.keys(onlineUsers).find(id => onlineUsers[id] === to);
+
+    if (s1) io.sockets.sockets.get(s1).join(roomId);
+    if (s2) io.sockets.sockets.get(s2).join(roomId);
+
+    io.to(roomId).emit("whiteboard-approved", { roomId });
+  });
+
+  socket.on("draw", (payload) => {
+    const { roomId, ...coords } = payload; 
+    if (roomId) {
+      socket.to(roomId).emit("draw", coords);
+    } else {
+      socket.broadcast.emit("draw", payload);
+    }
   });
 
   // ❌ Disconnect
   socket.on("disconnect", () => {
     delete onlineUsers[socket.id];
-    io.emit("onlineUsers", Object.values(onlineUsers));
+    
+    // 🔥 FIX: Send only UNIQUE names after someone leaves
+    const uniqueUsers = [...new Set(Object.values(onlineUsers))];
+    io.emit("onlineUsers", uniqueUsers);
+    
     console.log("User disconnected:", socket.id);
   });
 });

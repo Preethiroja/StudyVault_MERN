@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { api } from "../api";
 
 export default function FileUploader({ token }) {
@@ -7,7 +7,8 @@ export default function FileUploader({ token }) {
   const [uploading, setUploading] = useState(false);
   const [friendEmail, setFriendEmail] = useState("");
 
-  const fetchFiles = async () => {
+  // Wrapped in useCallback to fix the ESLint dependency warning
+  const fetchFiles = useCallback(async () => {
     try {
       const res = await api.get("/files", { headers: { Authorization: token } });
       setFiles(res.data);
@@ -17,9 +18,11 @@ export default function FileUploader({ token }) {
     } catch (err) {
       console.error("Failed to fetch files", err);
     }
-  };
+  }, [token]);
 
-  useEffect(() => { fetchFiles(); }, []);
+  useEffect(() => { 
+    fetchFiles(); 
+  }, [fetchFiles]);
 
   const onFileChange = async (e) => {
     const file = e.target.files[0];
@@ -55,13 +58,25 @@ export default function FileUploader({ token }) {
     }
   };
 
+  const deleteFile = async (fileId) => {
+    if (!window.confirm("Permanent delete this file?")) return;
+    try {
+      await api.delete(`/files/${fileId}`, {
+        headers: { Authorization: token },
+      });
+      fetchFiles(); // FIXED: using fetchFiles instead of loadFiles
+      alert("File deleted.");
+    } catch (err) {
+      alert("Delete failed.");
+    }
+  };
+
   const copyPublicLink = (fileId) => {
     const link = `${window.location.origin.replace(":3000", ":5000")}/api/files/download/${fileId}`;
     navigator.clipboard.writeText(link);
     alert("Public download link copied!");
   };
 
-  // Common button style for consistency
   const btnStyle = {
     padding: "8px 12px",
     borderRadius: "8px",
@@ -84,7 +99,7 @@ export default function FileUploader({ token }) {
 
       <h4 style={{ color: "#2d3436", borderBottom: "2px solid #eee", paddingBottom: "10px" }}>My Uploads</h4>
       <div className="file-list">
-        {files.map((f) => (
+        {files.map((f) => ( // FIXED: using files instead of myFiles
           <div key={f._id} style={{
             display: "flex",
             alignItems: "center",
@@ -105,8 +120,14 @@ export default function FileUploader({ token }) {
                 style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ddd", width: "160px" }}
               />
               <button onClick={() => shareToFriend(f._id)} style={{ ...btnStyle, backgroundColor: "#fdcb6e", color: "#2d3436" }}>🤝 Share</button>
-              <button onClick={() => window.open(`${window.location.origin.replace(":3000", ":5000")}/api/files/download/${f._id}`)} style={{ ...btnStyle, backgroundColor: "#0984e3" }}>📥 Download</button>
-              <button onClick={() => copyPublicLink(f._id)} style={{ ...btnStyle, backgroundColor: "#00b894" }}>🔗 Link</button>
+              <button 
+                onClick={() => window.open(`${window.location.origin.replace(":3000", ":5000")}/api/files/download/${f._id}`, "_blank", "noreferrer")} 
+                style={{ ...btnStyle, backgroundColor: "#0984e3" }}
+              >
+                📥
+              </button>
+              <button onClick={() => copyPublicLink(f._id)} style={{ ...btnStyle, backgroundColor: "#00b894" }}>🔗</button>
+              <button onClick={() => deleteFile(f._id)} style={{ ...btnStyle, backgroundColor: "#ff7675" }}>🗑️</button>
             </div>
           </div>
         ))}
@@ -114,7 +135,9 @@ export default function FileUploader({ token }) {
 
       <h4 style={{ color: "#00b894", marginTop: "40px", borderBottom: "2px solid #e3faf3", paddingBottom: "10px" }}>Shared With Me 🤝</h4>
       <div className="file-list">
-        {sharedFiles.length === 0 ? <p style={{ color: "gray", textAlign: "center", padding: "20px" }}>No files shared with you yet.</p> : (
+        {sharedFiles.length === 0 ? (
+          <p style={{ color: "gray", textAlign: "center", padding: "20px" }}>No files shared with you yet.</p>
+        ) : (
           sharedFiles.map((f) => (
             <div key={f._id} style={{
               display: "flex",
@@ -130,7 +153,10 @@ export default function FileUploader({ token }) {
                 <strong>{f.filename}</strong> <br/>
                 <small style={{ color: "#2f855a" }}>Sent by: {f.userId?.name || "Unknown User"}</small>
               </span>
-              <button onClick={() => window.open(`${window.location.origin.replace(":3000", ":5000")}/api/files/download/${f._id}`)} style={{ ...btnStyle, backgroundColor: "#38a169" }}>
+              <button 
+                onClick={() => window.open(`${window.location.origin.replace(":3000", ":5000")}/api/files/download/${f._id}`, "_blank", "noreferrer")} 
+                style={{ ...btnStyle, backgroundColor: "#38a169" }}
+              >
                 📥 Download
               </button>
             </div>

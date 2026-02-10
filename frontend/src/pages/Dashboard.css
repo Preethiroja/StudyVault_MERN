@@ -691,3 +691,156 @@
       height: 300px; /* Smaller whiteboard for mobile devices */
     }
   }
+/* ================= ENELYS GRAPH PAGE STYLES ================= */
+
+.analytics-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: #f8f9fa; /* Light grey background like Enelys */
+  padding: 20px;
+  border-radius: 20px;
+}
+
+.welcome-msg {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.sub-text {
+  color: #718096;
+  font-size: 14px;
+}
+
+/* KPI CARDS */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.kpi-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.kpi-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #a0aec0;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 700;
+  display: block;
+  margin: 8px 0;
+  color: #2d3748;
+}
+
+.kpi-trend {
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+}
+
+.trend-positive {
+  color: #38a169; /* Enelys Green */
+  font-weight: 600;
+}
+
+.trend-secondary {
+  color: #a0aec0;
+}
+
+/* GRAPH CONTAINER */
+.chart-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+}
+
+.chart-header {
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.graph-wrapper {
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fafafa;
+}
+/* ================= BUBBLE GRAPH CONTAINER ================= */
+
+.chart-card {
+  background: white !important;
+  border: none !important; /* Remove borders for the clean Enelys look */
+  border-radius: 24px;
+  padding: 40px;
+  /* Centering the bubble cluster */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 10px 50px rgba(0,0,0,0.03) !important;
+}
+
+.chart-header {
+  align-self: flex-start;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 30px;
+  letter-spacing: -0.5px;
+} 
+.delete-btn-mini {
+  color: #ff4d4d;
+  font-size: 1.2rem;
+  transition: transform 0.2s;
+  padding: 0 5px;
+}
+
+.delete-btn-mini:hover {
+  transform: scale(1.2);
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  margin-bottom: 8px;
+}
+.tutor-container {
+  margin-top: 15px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.tutor-input-box {
+  display: flex;
+  gap: 5px;
+}
+.tutor-input-box input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+}
+.tutor-response-box {
+  background: #f0f7ff;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  border-left: 4px solid #007bff;
+}

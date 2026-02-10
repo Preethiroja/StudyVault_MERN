@@ -1,112 +1,104 @@
-import React, { useRef, useState, useEffect } from "react";
-import io from "socket.io-client";
+import { useRef, useEffect, useState, useCallback } from "react";
 
-const socket = io("http://localhost:5000");
+// NOTE: We no longer import or create a socket here. 
+// We receive it as a prop from Dashboard.js
 
-export default function Whiteboard() {
+export default function Whiteboard({ roomId, socket }) {
   const canvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState("#ffffff"); 
-  const [tool, setTool] = useState("draw"); 
-  const [brushSize, setBrushSize] = useState(3);
+  const ctxRef = useRef(null);
+  const [drawing, setDrawing] = useState(false);
+
+  // UseCallback prevents the ESLint warning and keeps the function stable
+  const drawLine = useCallback((x0, y0, x1, y1, emit) => {
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    ctx.closePath();
+
+    if (!emit) return;
+
+    // Send drawing data through the shared socket
+    socket.emit("draw", { x0, y0, x1, y1, roomId });
+  }, [roomId, socket]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    
+    // Set internal canvas resolution to match displayed size
     canvas.width = canvas.offsetWidth;
-    canvas.height = 500;
+    canvas.height = 400;
+
     const ctx = canvas.getContext("2d");
+    ctx.strokeStyle = "#2d3436";
+    ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
+    ctxRef.current = ctx;
 
-    socket.on("draw-data", (data) => {
-      const { type, x, y, color, size, text } = data;
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineWidth = size;
-      if (type === "text") {
-        ctx.font = `${size * 5}px Poppins`;
-        ctx.fillText(text, x, y);
-      } else if (type === "draw") {
-        ctx.lineTo(x, y);
-        ctx.stroke();
-      } else if (type === "start") {
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-      }
-    });
-    return () => socket.off("draw-data");
-  }, []);
+    // Listener for incoming drawing data from other users
+    const handleRemoteDraw = (data) => {
+      const { x0, y0, x1, y1 } = data;
+      drawLine(x0, y0, x1, y1, false);
+    };
 
-  const getCoordinates = (e) => {
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    socket.on("draw", handleRemoteDraw);
+
+    // Cleanup listener on unmount
+    return () => {
+      socket.off("draw", handleRemoteDraw);
+    };
+  }, [drawLine, socket]);
+
+  const startDrawing = (e) => {
+    setDrawing(true);
+    // Store the starting coordinates on the ctx object for easy access
+    ctxRef.current.lastX = e.nativeEvent.offsetX;
+    ctxRef.current.lastY = e.nativeEvent.offsetY;
   };
 
-  const startAction = (e) => {
-    const { x, y } = getCoordinates(e);
-    const ctx = canvasRef.current.getContext("2d");
-    if (tool === "text") {
-      const text = prompt("Enter your text:");
-      if (text) {
-        ctx.fillStyle = color;
-        ctx.font = `${brushSize * 5}px Poppins`;
-        ctx.fillText(text, x, y);
-        socket.emit("draw-data", { type: "text", x, y, color, size: brushSize, text });
-      }
-    } else {
-      setIsDrawing(true);
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.strokeStyle = tool === "eraser" ? "#1e293b" : color;
-      ctx.lineWidth = brushSize;
-      socket.emit("draw-data", { type: "start", x, y, color: ctx.strokeStyle, size: brushSize });
-    }
+  const draw = (e) => {
+    if (!drawing) return;
+
+    const x = e.nativeEvent.offsetX;
+    const y = e.nativeEvent.offsetY;
+
+    // Draw locally and emit to server
+    drawLine(ctxRef.current.lastX, ctxRef.current.lastY, x, y, true);
+
+    // Update coordinates for the next segment
+    ctxRef.current.lastX = x;
+    ctxRef.current.lastY = y;
   };
 
-  const performAction = (e) => {
-    if (!isDrawing || tool === "text") return;
-    const { x, y } = getCoordinates(e);
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    socket.emit("draw-data", { type: "draw", x, y, color: ctx.strokeStyle, size: brushSize });
-  };
-
-  // 💾 NEW: DOWNLOAD FUNCTION
-  const downloadCanvas = () => {
-    const canvas = canvasRef.current;
-    const image = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = image;
-    link.download = `whiteboard-${Date.now()}.png`;
-    link.click();
-  };
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const stopDrawing = () => {
+    setDrawing(false);
   };
 
   return (
-    <div className="whiteboard-wrapper">
-      <div className="whiteboard-controls">
-        <div className="control-group">
-          <button className={tool === "draw" ? "active" : ""} onClick={() => setTool("draw")}>✏️ Draw</button>
-          <button className={tool === "text" ? "active" : ""} onClick={() => setTool("text")}>🔠 Text</button>
-          <button className={tool === "eraser" ? "active" : ""} onClick={() => setTool("eraser")}>🧽 Eraser</button>
-        </div>
-        <div className="control-group">
-          <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-          <input type="range" min="1" max="10" value={brushSize} onChange={(e) => setBrushSize(e.target.value)} />
-        </div>
-        <div className="control-group">
-          <button className="download-btn" onClick={downloadCanvas}>💾 Save PNG</button>
-          <button className="clear-btn" onClick={clearCanvas}>🗑️ Clear</button>
-        </div>
+    <div className="whiteboard-container" style={{ position: "relative" }}>
+      <canvas
+        ref={canvasRef}
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+        style={{
+          border: "2px solid #dfe6e9",
+          borderRadius: "10px",
+          width: "100%",
+          height: "400px",
+          background: "#ffffff",
+          cursor: "crosshair",
+          display: "block"
+        }}
+      />
+      <div style={{ marginTop: "10px", fontSize: "0.8rem", color: "#636e72" }}>
+        {roomId ? `Collaborating in Room: ${roomId}` : "Local Whiteboard"}
       </div>
-      <canvas ref={canvasRef} onMouseDown={startAction} onMouseMove={performAction} onMouseUp={() => setIsDrawing(false)} />
     </div>
   );
 }

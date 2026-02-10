@@ -10,6 +10,8 @@ import "react-calendar/dist/Calendar.css";
 
 // Ensure this file exists in the same folder
 import "./Dashboard.css";
+import io from "socket.io-client";
+const socket = io("http://localhost:5000");
 
 export default function Dashboard({ token, logout }) {
   const [activeTab, setActiveTab] = useState("notes");
@@ -20,6 +22,27 @@ export default function Dashboard({ token, logout }) {
   const [taskDate, setTaskDate] = useState("");
   const [users, setUsers] = useState([]);
   const [user, setUser] = useState(null);
+  const [whiteboardRoom, setWhiteboardRoom] = useState(null);
+const [inviteName, setInviteName] = useState("");
+const [tutorAnswers, setTutorAnswers] = useState({}); // Stores { noteId: "answer" }
+const [loadingTutorId, setLoadingTutorId] = useState(null); // Tracks which note is loading
+
+const askTutor = async (noteId, question) => {
+  if (!question.trim()) return;
+  setLoadingTutorId(noteId); // Start loading for THIS specific note
+  try {
+    const res = await api.post("/notes/ask-tutor", 
+      { noteId, question }, 
+      { headers: { Authorization: token } }
+    );
+    // Save answer using the noteId as the key
+    setTutorAnswers(prev => ({ ...prev, [noteId]: res.data.answer }));
+  } catch (err) {
+    alert("Tutor error");
+  } finally {
+    setLoadingTutorId(null);
+  }
+};
 
   /* ================= LOAD USER PROFILE ================= */
   const loadUserProfile = useCallback(async () => {
@@ -30,6 +53,7 @@ export default function Dashboard({ token, logout }) {
         headers: { Authorization: token },
       });
       setUser(res.data);
+      socket.emit("join", { user: res.data.name });
     } catch (err) {
       console.error("Failed to load user profile", err);
     }
@@ -89,7 +113,7 @@ export default function Dashboard({ token, logout }) {
   const addNote = async (e) => {
   e.preventDefault();
   try {
-    const res = await api.post(
+    await api.post(
       "/notes",
       { title: e.target.title.value, content: e.target.content.value },
       { headers: { Authorization: token } }
@@ -160,6 +184,43 @@ const deleteTask = async (taskId) => {
   }, [loadUserProfile, loadNotes, loadTasks, loadLeaderboard]);
 
   /* ================= NOTIFICATIONS ================= */
+useEffect(() => {
+  if (!user) return;
+
+  socket.on("whiteboard-request-received", ({ from }) => {
+    const ok = window.confirm(`${from} wants to draw with you. Accept?`);
+    if (ok) {
+      socket.emit("accept-whiteboard", { from, to: user.name });
+    }
+  });
+
+  socket.on("whiteboard-approved", ({ roomId }) => {
+    setWhiteboardRoom(roomId);
+    setActiveTab("whiteboard");
+    alert("Collaboration Started!");
+  });
+
+  // NEW: Listen for the end session signal from server
+  socket.on("whiteboard-ended", () => {
+    setWhiteboardRoom(null);
+    alert("The whiteboard session has been ended.");
+  });
+    
+  return () => {
+    socket.off("whiteboard-request-received");
+    socket.off("whiteboard-approved");
+    socket.off("whiteboard-ended"); // Cleanup
+  };
+}, [user]);
+
+// NEW: Update the End Session button handler
+const handleEndSession = () => {
+  if (window.confirm("End this session for everyone?")) {
+    socket.emit("end-whiteboard", { roomId: whiteboardRoom });
+  }
+};
+
+
   useEffect(() => {
   const interval = setInterval(() => {
     const now = new Date().getTime(); // Use timestamps for accuracy
@@ -265,7 +326,38 @@ const deleteTask = async (taskId) => {
           {n.summary || "Generating summary..."}
         </p>
       </div>
+<div className="tutor-container">
+  <div className="tutor-input-box">
+    <input 
+      type="text" 
+      placeholder="Ask tutor about this..." 
+      id={`input-${n._id}`} 
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          askTutor(n._id, e.target.value);
+          e.target.value = ""; // Clear input
+        }
+      }}
+    />
+    <button onClick={() => {
+      const val = document.getElementById(`input-${n._id}`).value;
+      askTutor(n._id, val);
+    }}>🚀</button>
+  </div>
 
+  {/* Display Loading status for this specific note */}
+  {loadingTutorId === n._id && <p className="pulse-text">Tutor is thinking... 🤔</p>}
+
+  {/* Display the Answer if it exists for this note */}
+  {tutorAnswers[n._id] && (
+    <div className="tutor-response-box">
+      <p><b>Tutor:</b> {tutorAnswers[n._id]}</p>
+      <button className="clear-btn" onClick={() => setTutorAnswers(prev => ({...prev, [n._id]: null}))}>
+        Clear Chat
+      </button>
+    </div>
+  )}
+</div>
       {/* Only render quiz if it's not Pending and actually exists */}
       {n.quiz && n.quiz !== "Pending..." && (
         <div className="quiz-container">
@@ -278,23 +370,72 @@ const deleteTask = async (taskId) => {
 </div>
           </div>
         )}
-
         {activeTab === "graph" && (
-          <div className="card" style={{ height: "500px" }}>
-            <GraphVisualization nodes={graphData.nodes} links={graphData.links} />
-          </div>
-        )}
+  <div className="analytics-container">
+    {/* Header Section */}
+    <div className="graph-header-text">
+      <h2 className="welcome-msg">Analytics Overview</h2>
+      <p className="sub-text">Welcome to your learning analysis dashboard</p>
+    </div>
 
+    {/* KPI Row - Top 3 Boxes */}
+    <div className="kpi-grid">
+      <div className="kpi-card">
+        <span className="kpi-label">TOTAL NOTES</span>
+        <span className="kpi-value">{graphData.nodes.length}</span>
+        <div className="kpi-trend">
+        </div>
+      </div>
+      <div className="kpi-card">
+        <span className="kpi-label">CONNECTIONS</span>
+        <span className="kpi-value">{graphData.links.length}</span>
+        <div className="kpi-trend">
+        </div>
+      </div>
+    </div>
+
+    {/* Main Graph Card */}
+    <div className="chart-card">
+      <div className="chart-header">KNOWLEDGE MAP RELATIONSHIPS</div>
+      <div className="graph-wrapper">
+        <GraphVisualization nodes={graphData.nodes} links={graphData.links} />
+      </div>
+    </div>
+  </div>
+)}
         {activeTab === "whiteboard" && (
   <div className="animate-in">
-    <div className="card">
-       <h3>Collaborative Whiteboard 🎨</h3>
-       <p style={{color: '#636e72', fontSize: '14px'}}>Draw your ideas. Changes sync in real-time.</p>
-       
-       {/* THIS IS THE FIX */}
-       <div className="whiteboard-container">
-         <Whiteboard />
-       </div>
+    <div className="card" style={{ textAlign: "center" }}>
+      {!whiteboardRoom ? (
+        <div className="setup-collaboration">
+          <h3>🎨 Private Whiteboard</h3>
+          <p>Enter a username to invite them to draw with you.</p>
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "15px" }}>
+            <input 
+              value={inviteName}
+              onChange={(e) => setInviteName(e.target.value)}
+              placeholder="Username to invite..." 
+              style={{ padding: "8px", borderRadius: "5px", border: "1px solid #ddd" }}
+            />
+            <button onClick={() => {
+              if(!inviteName) return alert("Enter a name");
+              socket.emit("request-whiteboard", { from: user.name, toUser: inviteName });
+              alert(`Request sent to ${inviteName}`);
+            }}>
+              🤝 Send Request
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ marginBottom: "10px", display: "flex", justifyContent: "space-between" }}>
+            <span>🟢 Connected Session:{whiteboardRoom}</span>
+<button onClick={handleEndSession} className="delete-btn">
+  End Session for All
+</button>          </div>
+          <Whiteboard roomId={whiteboardRoom} socket={socket} />
+        </div>
+      )}
     </div>
   </div>
 )}
