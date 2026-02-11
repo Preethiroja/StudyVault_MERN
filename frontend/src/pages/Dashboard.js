@@ -26,6 +26,8 @@ export default function Dashboard({ token, logout }) {
 const [inviteName, setInviteName] = useState("");
 const [tutorAnswers, setTutorAnswers] = useState({}); // Stores { noteId: "answer" }
 const [loadingTutorId, setLoadingTutorId] = useState(null); // Tracks which note is loading
+const [roomId, setRoomId] = useState("public-hall"); 
+const [roomCodeInput, setRoomCodeInput] = useState("");
 
 const askTutor = async (noteId, question) => {
   if (!question.trim()) return;
@@ -170,6 +172,12 @@ const deleteTask = async (taskId) => {
     alert("Could not delete task.");
   }
 };
+
+useEffect(() => {
+  if (user) {
+    socket.emit("join-room", { roomId: "public-hall", user: user.name });
+  }
+}, [user]);
 
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
@@ -440,18 +448,55 @@ const handleEndSession = () => {
   </div>
 )}
         {activeTab === "chat" && (
-  <ChatBox
-    user={user?.name || "Anonymous"}
-    context={
-      activeTab === "notes"
-        ? "Notes Discussion"
-        : activeTab === "graph"
-        ? "Graph Concepts"
-        : activeTab === "whiteboard"
-        ? "Whiteboard Session"
-        : "General Study"
-    }
-  />
+  <div className="animate-in">
+    {/* 🚪 ROOM SELECTOR BAR */}
+    <div className="card room-selector-bar" style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
+      <button 
+        className={roomId === "public-hall" ? "active-room-btn" : ""}
+        onClick={() => {
+          setRoomId("public-hall");
+          socket.emit("join-room", { roomId: "public-hall", user: user.name });
+        }}
+      >
+        🌐 Public Hall
+      </button>
+
+      <button onClick={() => {
+        const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+        setRoomId(newCode);
+        socket.emit("join-room", { roomId: newCode, user: user.name });
+        alert(`Private Room Created! Code: ${newCode}`);
+      }}>
+        🔒 Create Private
+      </button>
+
+      <div style={{ display: "flex", gap: "5px", marginLeft: "auto" }}>
+        <input 
+          placeholder="Enter Code" 
+          value={roomCodeInput} 
+          style={{ width: "120px", padding: "5px" }}
+          onChange={(e) => setRoomCodeInput(e.target.value)} 
+        />
+        <button onClick={() => {
+          if(!roomCodeInput) return alert("Enter a code");
+          setRoomId(roomCodeInput);
+          socket.emit("join-room", { roomId: roomCodeInput, user: user.name });
+        }}>Join</button>
+      </div>
+    </div>
+
+    {/* 💬 CHATBOX WITH ROOM PROPS */}
+    <div className="card">
+      <div style={{ marginBottom: "10px" }}>
+        Current Room: <span className="badge">{roomId}</span>
+      </div>
+      <ChatBox
+        socket={socket}
+        user={user?.name || "Anonymous"}
+        roomId={roomId} // 🚩 CRITICAL: Passing the roomId to the component
+      />
+    </div>
+  </div>
 )}
 
 

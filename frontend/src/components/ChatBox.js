@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 
-// ✅ socket outside component (IMPORTANT)
+// ✅ Move socket inside if you want to ensure it handles room changes properly, 
+// or keep it outside and ensure join-room is called.
 const socket = io("http://localhost:5000");
 
 export default function ChatBox({
   user = "Anonymous",
   context = "General Discussion",
+  roomId = "public-hall" // 🚩 Added this prop
 }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -14,29 +16,31 @@ export default function ChatBox({
   const [typingUser, setTypingUser] = useState("");
   const messagesEndRef = useRef(null);
 
-  // ================= JOIN & ONLINE USERS =================
+  // ================= ROOM MANAGEMENT =================
   useEffect(() => {
-    socket.emit("join", { user });
+    // When roomId changes, tell the server to move this user
+    socket.emit("join-room", { roomId, user });
 
-    socket.on("onlineUsers", (users) => {
-      setOnlineUsers(users);
-    });
+    // Clear messages when switching rooms (optional, but cleaner)
+    setMessages([]); 
 
     return () => {
-      socket.off("onlineUsers");
+      // Optional: Leave room logic if implemented on backend
     };
-  }, [user]);
+  }, [roomId, user]);
 
   // ================= RECEIVE MESSAGES =================
   useEffect(() => {
+    // We use a specific listener for room-based messages
     const handleReceive = (data) => {
+      // Only show message if it belongs to this room (Server usually handles this, but safety first)
       setMessages((prev) => [...prev, data]);
     };
 
-    socket.on("receiveMessage", handleReceive);
+    socket.on("receive-message", handleReceive); // 🚩 Matches server's io.to(roomId).emit
 
     return () => {
-      socket.off("receiveMessage", handleReceive);
+      socket.off("receive-message", handleReceive);
     };
   }, []);
 
@@ -59,7 +63,9 @@ export default function ChatBox({
   const sendMessage = () => {
     if (!input.trim()) return;
 
-    socket.emit("sendMessage", {
+    // 🚩 CRITICAL: Send the roomId so the server knows where to broadcast
+    socket.emit("send-message", {
+      roomId,
       user,
       message: input,
       context,
@@ -70,64 +76,41 @@ export default function ChatBox({
   };
 
   return (
-    <div className="card">
-      <h3>💬 Live Chat</h3>
+    <div className="card chat-container">
+      <div className="chat-header">
+        <h3>💬 {roomId === "public-hall" ? "Public Hall" : `Private Room: ${roomId}`}</h3>
+        <span className="context-tag">#{context}</span>
+      </div>
 
-      <p style={{ fontSize: "12px", color: "#555" }}>
-        Context: <b>{context}</b>
-      </p>
-
-      <p style={{ fontSize: "12px", marginBottom: "8px" }}>
-        👥 Online Users:{" "}
-        {onlineUsers.length > 0 ? onlineUsers.join(", ") : "No one online"}
-      </p>
-
-      <div
-        style={{
-          height: "230px",
-          overflowY: "auto",
-          border: "1px solid #ddd",
-          padding: "10px",
-          borderRadius: "8px",
-          marginBottom: "8px",
-          background: "#fafafa",
-        }}
-      >
+      <div className="chat-messages-box">
+        {messages.length === 0 && <p className="empty-chat">No messages in this room yet...</p>}
         {messages.map((m, i) => (
-          <div key={i} style={{ marginBottom: "8px" }}>
-            <b>{m.user}</b>{" "}
-            <span style={{ fontSize: "11px", color: "#999" }}>
-              [{m.time}]
-            </span>
-            <div style={{ fontSize: "14px" }}>{m.message}</div>
-            <div style={{ fontSize: "11px", color: "#0fb9b1" }}>
-              #{m.context}
+          <div key={i} className={`message-bubble ${m.user === user ? "my-message" : ""}`}>
+            <div className="msg-meta">
+              <b>{m.user}</b> <span className="msg-time">{m.time}</span>
             </div>
+            <div className="msg-text">{m.message}</div>
           </div>
         ))}
 
         {typingUser && (
-          <p style={{ fontSize: "12px", color: "#888" }}>
-            ✍️ {typingUser} is typing...
-          </p>
+          <p className="typing-indicator">✍️ {typingUser} is typing...</p>
         )}
-
         <div ref={messagesEndRef} />
       </div>
 
-      <input
-        value={input}
-        onChange={(e) => {
-          setInput(e.target.value);
-          socket.emit("typing", user);
-        }}
-        placeholder="Type your message..."
-        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-      />
-
-      <button onClick={sendMessage} style={{ marginTop: "8px" }}>
-        Send
-      </button>
+      <div className="chat-input-area">
+        <input
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            socket.emit("typing", user);
+          }}
+          placeholder="Type your message..."
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+        />
+        <button onClick={sendMessage}>Send</button>
+      </div>
     </div>
   );
 }

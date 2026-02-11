@@ -99,7 +99,27 @@ io.on("connection", (socket) => {
     console.log("User disconnected:", socket.id);
   });
 });
+io.on("connection", (socket) => {
+  // --- ADD THIS BLOCK ---
+  socket.on("join-room", ({ roomId, user }) => {
+    // Force the socket into a specific "room"
+    socket.join(roomId);
+    console.log(`✅ ${user} connected to Room: ${roomId}`);
+    
+    // Notify others in that specific room only
+    socket.to(roomId).emit("message", { 
+      user: "System", 
+      text: `${user} has joined the study session.` 
+    });
+  });
 
+  // Update your existing Chat/Whiteboard listeners to include roomId
+  socket.on("send-message", (data) => {
+    // Use io.to(roomId) instead of io.emit()
+    io.to(data.roomId).emit("receive-message", data);
+  });
+  // ----------------------
+});
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
