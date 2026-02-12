@@ -1,58 +1,50 @@
 import { useState, useEffect, useRef } from "react";
-import io from "socket.io-client";
 
-// ✅ Move socket inside if you want to ensure it handles room changes properly, 
-// or keep it outside and ensure join-room is called.
-const socket = io("http://localhost:5000");
-
-export default function ChatBox({
-  user = "Anonymous",
-  context = "General Discussion",
-  roomId = "public-hall" // 🚩 Added this prop
-}) {
+export default function ChatBox({ 
+  user = "Anonymous", 
+  context = "General Discussion", 
+  roomId = "public-hall", 
+  socket 
+}) { 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUser, setTypingUser] = useState("");
   const messagesEndRef = useRef(null);
 
-  // ================= ROOM MANAGEMENT =================
+  // ================= MAIN SOCKET LOGIC =================
   useEffect(() => {
-    // When roomId changes, tell the server to move this user
+    if (!socket) return;
+
+    // 1. Tell server we are joining this specific room
     socket.emit("join-room", { roomId, user });
 
-    // Clear messages when switching rooms (optional, but cleaner)
-    setMessages([]); 
-
-    return () => {
-      // Optional: Leave room logic if implemented on backend
-    };
-  }, [roomId, user]);
-
-  // ================= RECEIVE MESSAGES =================
-  useEffect(() => {
-    // We use a specific listener for room-based messages
-    const handleReceive = (data) => {
-      // Only show message if it belongs to this room (Server usually handles this, but safety first)
+    // 2. Define handler functions
+    // We name them so we can clean them up specifically
+    const onMessageReceived = (data) => {
       setMessages((prev) => [...prev, data]);
     };
 
-    socket.on("receive-message", handleReceive); // 🚩 Matches server's io.to(roomId).emit
-
-    return () => {
-      socket.off("receive-message", handleReceive);
+    const onTyping = (name) => {
+      // Don't show the typing indicator if it's you typing
+      if (name !== user) {
+        setTypingUser(name);
+        // Clear the indicator after 1.5 seconds of silence
+        const timer = setTimeout(() => setTypingUser(""), 1500);
+        return () => clearTimeout(timer);
+      }
     };
-  }, []);
 
-  // ================= TYPING INDICATOR =================
-  useEffect(() => {
-    socket.on("typing", (name) => {
-      setTypingUser(name);
-      setTimeout(() => setTypingUser(""), 1500);
-    });
+    // 3. Attach listeners
+    socket.on("receive-message", onMessageReceived);
+    socket.on("typing", onTyping);
 
-    return () => socket.off("typing");
-  }, []);
+    // 4. CLEANUP: This is the "Double-Killer"
+    // This runs before the effect runs again or when the component unmounts
+    return () => {
+      socket.off("receive-message", onMessageReceived);
+      socket.off("typing", onTyping);
+    };
+  }, [roomId, socket, user]); 
 
   // ================= AUTO SCROLL =================
   useEffect(() => {
@@ -63,13 +55,12 @@ export default function ChatBox({
   const sendMessage = () => {
     if (!input.trim()) return;
 
-    // 🚩 CRITICAL: Send the roomId so the server knows where to broadcast
     socket.emit("send-message", {
       roomId,
       user,
       message: input,
       context,
-      time: new Date().toLocaleTimeString(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     });
 
     setInput("");
@@ -83,9 +74,15 @@ export default function ChatBox({
       </div>
 
       <div className="chat-messages-box">
-        {messages.length === 0 && <p className="empty-chat">No messages in this room yet...</p>}
+        {messages.length === 0 && (
+          <p className="empty-chat">No messages in this room yet...</p>
+        )}
+        
         {messages.map((m, i) => (
-          <div key={i} className={`message-bubble ${m.user === user ? "my-message" : ""}`}>
+          <div 
+            key={i} 
+            className={`message-bubble ${m.user === user ? "my-message" : ""}`}
+          >
             <div className="msg-meta">
               <b>{m.user}</b> <span className="msg-time">{m.time}</span>
             </div>
@@ -104,7 +101,7 @@ export default function ChatBox({
           value={input}
           onChange={(e) => {
             setInput(e.target.value);
-            socket.emit("typing", user);
+            socket.emit("typing", { roomId, user }); // Pass room so only room-mates see it
           }}
           placeholder="Type your message..."
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}

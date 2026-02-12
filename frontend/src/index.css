@@ -1,23 +1,61 @@
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
-body{background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;}
-.container{max-width:1200px;margin:auto;padding:20px;}
-.card{background:white;padding:20px;border-radius:12px;box-shadow:0 15px 30px rgba(0,0,0,0.15);margin-bottom:20px;}
+/* ================= RESET & GLOBAL ================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* Keeping Segoe UI for this section, or switch to 'Inter' to match perfectly */
+  font-family: 'Segoe UI', sans-serif; 
+}
+
+body {
+  /* Using the same gradient as your dashboard */
+  background: linear-gradient(135deg, #0f94a5, #1a7eca, #1893db);
+  min-height: 100vh;
+  color: #333;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  
+  /* Responsive margins: Space for the sidebar on Desktop */
+  margin-left: 290px; 
+  margin-right: 20px;
+  margin-top: 100px; /* Space for the Navbar + padding */
+  
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.9); /* Glass effect */
+  backdrop-filter: blur(10px);
+  padding: 28px; /* Increased padding for modern look */
+  border-radius: 24px; /* Modern rounded corners */
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08); /* Softer shadow */
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  width: 100%;
+}
+
+/* ================= NAVBAR ================= */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   width: 100%;
-  height: 65px;
+  height: 70px; /* Slightly taller for better touch target */
   z-index: 1100;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.85); /* Glassmorphism */
+  backdrop-filter: blur(15px);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 30px;
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-  border-radius: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 0 0 20px 20px; /* Rounded bottom corners only */
 }
 
 .nav-title {
@@ -33,28 +71,148 @@ body{background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;}
 }
 
 .logout-btn {
-  background: #0f94a5, #1a7eca, #1893db;
-  padding: 10px 22px;
+  /* Matching the Dashboard Button Style */
+  background: linear-gradient(135deg, #0fb9b1, #45aaf2);
+  padding: 10px 24px;
   font-size: 13px;
   font-weight: 700;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255, 94, 87, 0.2);
+  box-shadow: 0 4px 12px rgba(15, 185, 177, 0.25);
 }
 
 .logout-btn:hover {
   transform: translateY(-2px);
-  filter: brightness(1.1);
-  box-shadow: 0 6px 18px rgba(255, 94, 87, 0.3);
+  box-shadow: 0 8px 20px rgba(15, 185, 177, 0.4);
 }
 
-.tabs{display:flex;gap:10px;margin-bottom:20px;}
-.tab{padding:10px 20px;background:white;border-radius:6px;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
-.tab.active{background:#667eea;color:white;}
-.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
-input,textarea{padding:10px;border-radius:6px;border:1px solid #ccc;width:100%;}
-button{padding:10px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;}
-button:hover{background:#5a67d8;}
+/* ================= TABS (Specific to this page if used internally) ================= */
+/* Note: If you are using the global Sidebar, you might not need these .tabs styles.
+   I have updated them to match the Dashboard Card styling just in case. */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  flex-wrap: wrap; /* Responsive wrapping */
+}
+
+.tab {
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 14px; /* Modern radius */
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  font-weight: 600;
+  color: #64748b;
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+.tab:hover {
+  background: rgba(15, 185, 177, 0.1);
+  color: #0fb9b1;
+  transform: translateY(-2px);
+}
+
+.tab.active {
+  background: linear-gradient(135deg, #0fb9b1, #1a7eca); /* Dashboard Gradient */
+  color: white;
+  box-shadow: 0 10px 20px rgba(15, 185, 177, 0.3);
+}
+
+/* ================= GRIDS & INPUTS ================= */
+.notes-grid {
+  display: grid;
+  /* Responsive grid matching Dashboard */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 15px; /* Larger touch area */
+  border-radius: 14px; /* Modern radius */
+  border: 2px solid transparent; /* Prepare for focus state */
+  background: #f1f5f9;
+  font-size: 14px;
+  transition: 0.3s;
+  outline: none;
+  font-family: inherit;
+  margin-bottom: 10px;
+}
+
+input:focus, textarea:focus {
+  border-color: #0fb9b1; /* Dashboard Focus Color */
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(15, 185, 177, 0.15);
+}
+
+button {
+  padding: 15px 28px;
+  background: linear-gradient(135deg, #0fb9b1, #45aaf2); /* Dashboard Button */
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+  display: inline-block;
+}
+
+button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(15, 185, 177, 0.45);
+}
+
+/* ================= RESPONSIVE ADJUSTMENTS ================= */
+
+/* Tablet & Mobile (Sidebar becomes top nav) */
+@media (max-width: 1024px) {
+  .navbar {
+    /* Navbar stays at top, but ensure it doesn't conflict with the Sidebar-converted-to-Nav */
+    top: 0; 
+    z-index: 1100;
+  }
+
+  .container {
+    /* Reset margins to fill screen width */
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 90px; /* Space for fixed Navbar */
+    padding: 15px;
+    max-width: 100%;
+  }
+
+  .nav-title {
+    font-size: 18px; /* Smaller text on mobile */
+  }
+  
+  .logout-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+/* Mobile Phones */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 20px;
+    height: 60px;
+  }
+
+  .nav-title span {
+    /* Hide part of title if too long, or adjust via JS */
+    display: block; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr; /* Stack cards */
+  }
+}

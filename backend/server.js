@@ -25,40 +25,77 @@ app.use("/api/tasks", require("./routes/taskRoutes"));
 app.use("/api/leaderboard", require("./routes/leaderboardRoutes"));
 app.use("/api/files", require("./routes/shareRoutes"));
 
-// ================= SOCKET.IO =================
+// ================= SOCKET.IO STATE =================
 const onlineUsers = {}; // Key: socket.id, Value: username
 
+// ================= SOCKET.IO LOGIC =================
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // 🚪 End Whiteboard for all in room
-  socket.on("end-whiteboard", ({ roomId }) => {
-    if (roomId) {
-      io.to(roomId).emit("whiteboard-ended");
-      io.in(roomId).socketsLeave(roomId);
+  // 👤 1. USER PRESENCE (Login/Join)
+  socket.on("join", ({ user }) => {
+    if (!user) return;
+    onlineUsers[socket.id] = user;
+    
+    // Broadcast updated unique user list to everyone
+    const uniqueUsers = [...new Set(Object.values(onlineUsers))];
+    io.emit("onlineUsers", uniqueUsers);
+    console.log(`${user} joined global presence`);
+  });
+
+  // 🚪 2. ROOM MANAGEMENT (Chat & Study Rooms)
+socket.on("join-room", ({ roomId, user }) => {
+  if (!roomId || !user) return;
+
+  // Check if the user is already in this room to prevent double system messages
+  const isAlreadyInRoom = socket.rooms.has(roomId);
+
+  // Leave previous rooms
+  socket.rooms.forEach((room) => {
+    if (room !== socket.id && room !== roomId) socket.leave(room);
+  });
+
+  socket.join(roomId);
+  console.log(`${user} joined room: ${roomId}`);
+
+  // ONLY notify others if they weren't already officially in this room session
+  if (!isAlreadyInRoom) {
+    socket.to(roomId).emit("receive-message", {
+      user: "System",
+      message: `${user} joined the room`,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    });
+  }
+});
+
+  // 💬 3. CHAT MESSAGING
+  socket.on("send-message", (data) => {
+    // data: { roomId, user, message, time }
+    if (data.roomId) {
+      io.to(data.roomId).emit("receive-message", data);
     }
   });
 
-  // 👤 User joins
-  socket.on("join", ({ user }) => {
-    onlineUsers[socket.id] = user;
-    
-    // 🔥 FIX: Send only UNIQUE names to the frontend
-    const uniqueUsers = [...new Set(Object.values(onlineUsers))];
-    io.emit("onlineUsers", uniqueUsers);
+  // ✍️ 4. TYPING INDICATORS
+  socket.on("typing", ({ roomId, user }) => {
+    if (roomId) {
+      socket.to(roomId).emit("typing", user);
+    } else {
+      socket.broadcast.emit("typing", user);
+    }
   });
 
-  // 💬 Chat message
-  socket.on("sendMessage", (data) => {
-    io.emit("receiveMessage", data);
+  // ✉️ 5. PRIVATE INVITES (Chat)
+  socket.on("request-chat-invite", ({ from, toUser, roomId }) => {
+    const targetSocketId = Object.keys(onlineUsers).find(
+      (id) => onlineUsers[id] === toUser
+    );
+    if (targetSocketId) {
+      io.to(targetSocketId).emit("chat-invite-received", { from, roomId });
+    }
   });
 
-  // ✍️ Typing indicator
-  socket.on("typing", (user) => {
-    socket.broadcast.emit("typing", user);
-  });
-
-  // 🎨 Whiteboard logic
+  // 🎨 6. WHITEBOARD COLLABORATION
   socket.on("request-whiteboard", ({ from, toUser }) => {
     const targetSocketId = Object.keys(onlineUsers).find(
       (id) => onlineUsers[id] === toUser
@@ -69,59 +106,48 @@ io.on("connection", (socket) => {
   });
 
   socket.on("accept-whiteboard", ({ from, to }) => {
-    const roomId = [from, to].sort().join("_");
+    // Create a unique room name for the two users
+    const whiteboardRoomId = `WB_${[from, to].sort().join("_")}`;
+    
     const s1 = Object.keys(onlineUsers).find(id => onlineUsers[id] === from);
     const s2 = Object.keys(onlineUsers).find(id => onlineUsers[id] === to);
 
-    if (s1) io.sockets.sockets.get(s1).join(roomId);
-    if (s2) io.sockets.sockets.get(s2).join(roomId);
+    if (s1) io.sockets.sockets.get(s1)?.join(whiteboardRoomId);
+    if (s2) io.sockets.sockets.get(s2)?.join(whiteboardRoomId);
 
-    io.to(roomId).emit("whiteboard-approved", { roomId });
+    io.to(whiteboardRoomId).emit("whiteboard-approved", { roomId: whiteboardRoomId });
   });
 
   socket.on("draw", (payload) => {
     const { roomId, ...coords } = payload; 
     if (roomId) {
       socket.to(roomId).emit("draw", coords);
-    } else {
-      socket.broadcast.emit("draw", payload);
     }
   });
 
-  // ❌ Disconnect
+  socket.on("end-whiteboard", ({ roomId }) => {
+    if (roomId) {
+      io.to(roomId).emit("whiteboard-ended");
+      // Force users to leave the whiteboard room
+      io.in(roomId).socketsLeave(roomId);
+    }
+  });
+
+  // ❌ 7. DISCONNECT
   socket.on("disconnect", () => {
+    const username = onlineUsers[socket.id];
     delete onlineUsers[socket.id];
     
-    // 🔥 FIX: Send only UNIQUE names after someone leaves
+    // Update global user list
     const uniqueUsers = [...new Set(Object.values(onlineUsers))];
     io.emit("onlineUsers", uniqueUsers);
     
-    console.log("User disconnected:", socket.id);
+    console.log(`User disconnected: ${socket.id} (${username || "Unknown"})`);
   });
 });
-io.on("connection", (socket) => {
-  // --- ADD THIS BLOCK ---
-  socket.on("join-room", ({ roomId, user }) => {
-    // Force the socket into a specific "room"
-    socket.join(roomId);
-    console.log(`✅ ${user} connected to Room: ${roomId}`);
-    
-    // Notify others in that specific room only
-    socket.to(roomId).emit("message", { 
-      user: "System", 
-      text: `${user} has joined the study session.` 
-    });
-  });
 
-  // Update your existing Chat/Whiteboard listeners to include roomId
-  socket.on("send-message", (data) => {
-    // Use io.to(roomId) instead of io.emit()
-    io.to(data.roomId).emit("receive-message", data);
-  });
-  // ----------------------
-});
 // ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`✅ Server running on ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });

@@ -172,6 +172,20 @@ const deleteTask = async (taskId) => {
     alert("Could not delete task.");
   }
 };
+const sendChatInvite = (targetUsername) => {
+  if (!targetUsername) return alert("Please enter a username.");
+  const newRoomId = roomId; 
+  setRoomId(newRoomId);
+  socket.emit("join-room", { roomId: newRoomId, user: user.name });
+  socket.emit("request-chat-invite", { 
+    from: user.name, 
+    toUser: targetUsername, 
+    roomId: newRoomId 
+  });
+  
+  alert(`Invite sent to ${targetUsername}!`);
+  setInviteName("");
+};
 
 useEffect(() => {
   if (user) {
@@ -213,7 +227,6 @@ useEffect(() => {
     setWhiteboardRoom(null);
     alert("The whiteboard session has been ended.");
   });
-    
   return () => {
     socket.off("whiteboard-request-received");
     socket.off("whiteboard-approved");
@@ -221,13 +234,48 @@ useEffect(() => {
   };
 }, [user]);
 
+/* ================= PRIVATE CHAT INVITE LOGIC ================= */
+useEffect(() => {
+  if (!user || !socket) return;
+
+  const handleChatInvite = ({ from, roomId: targetRoomId }) => {
+    const ok = window.confirm(`${from} invited you to a private study room (${targetRoomId}). Join now?`);
+    if (ok) {
+      setRoomId(targetRoomId);
+      socket.emit("join-room", { roomId: targetRoomId, user: user.name });
+      setActiveTab("chat");
+    }
+  };
+
+  socket.on("chat-invite-received", handleChatInvite);
+
+  return () => {
+    socket.off("chat-invite-received", handleChatInvite);
+  };
+}, [user, socket]); // Runs only when user or socket instance changes
+
+
 // NEW: Update the End Session button handler
 const handleEndSession = () => {
   if (window.confirm("End this session for everyone?")) {
     socket.emit("end-whiteboard", { roomId: whiteboardRoom });
   }
 };
+useEffect(() => {
+  // 1. Parse the URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomFromUrl = urlParams.get("room");
 
+  // 2. If a valid room code is found and the user is logged in
+  if (roomFromUrl && roomFromUrl.startsWith("STUDY_") && user) {
+    setRoomId(roomFromUrl);
+    socket.emit("join-room", { roomId: roomFromUrl, user: user.name });
+    setActiveTab("chat");
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    console.log(`Auto-joined room: ${roomFromUrl}`);
+  }
+}, [user]); // Runs as soon as the 'user' profile is loaded
 
   useEffect(() => {
   const interval = setInterval(() => {
@@ -447,10 +495,11 @@ const handleEndSession = () => {
     </div>
   </div>
 )}
-        {activeTab === "chat" && (
+{activeTab === "chat" && (
   <div className="animate-in">
     {/* 🚪 ROOM SELECTOR BAR */}
-    <div className="card room-selector-bar" style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
+    <div className="card room-selector-bar" style={{ marginBottom: "20px", display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+      
       <button 
         className={roomId === "public-hall" ? "active-room-btn" : ""}
         onClick={() => {
@@ -462,19 +511,62 @@ const handleEndSession = () => {
       </button>
 
       <button onClick={() => {
-        const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const newCode = `STUDY_${randomSuffix}`;
         setRoomId(newCode);
         socket.emit("join-room", { roomId: newCode, user: user.name });
-        alert(`Private Room Created! Code: ${newCode}`);
+        navigator.clipboard.writeText(newCode);
+        alert(`Private Room Created: ${newCode}\nCode copied to clipboard!`);
       }}>
         🔒 Create Private
       </button>
 
+      {/* 🤝 INVITE BY USERNAME SECTION */}
+      {roomId.startsWith("STUDY_") && (
+        <div style={{ display: "flex", gap: "5px", borderLeft: "2px solid #eee", paddingLeft: "15px" }}>
+          <input 
+            placeholder="Friend's Username" 
+            value={inviteName} 
+            onChange={(e) => setInviteName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendChatInvite()}
+            style={{ width: "140px", padding: "6px", borderRadius: "4px", border: "1px solid #ddd" }}
+          />
+          <button onClick={() => sendChatInvite(inviteName)} style={{ backgroundColor: "#6c5ce7", color: "white" }}>
+  🤝 Invite
+</button>
+        </div>
+      )}
+
+      {/* 🔗 SHARE LINK BUTTON */}
+      {roomId.startsWith("STUDY_") && (
+        <button 
+          className="share-btn"
+          style={{ backgroundColor: "#28a745", color: "white" }}
+          onClick={async () => {
+            const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+            try {
+              if (navigator.share) {
+                await navigator.share({
+                  title: 'Join my Study Room',
+                  text: `Join my private study session! Code: ${roomId}`,
+                  url: inviteUrl,
+                });
+              } else {
+                await navigator.clipboard.writeText(inviteUrl);
+                alert("Invite link copied to clipboard!");
+              }
+            } catch (err) { console.error(err); }
+          }}
+        >
+          🔗 Share Link
+        </button>
+      )}
+
       <div style={{ display: "flex", gap: "5px", marginLeft: "auto" }}>
         <input 
-          placeholder="Enter Code" 
+          placeholder="Code" 
           value={roomCodeInput} 
-          style={{ width: "120px", padding: "5px" }}
+          style={{ width: "100px", padding: "6px" }}
           onChange={(e) => setRoomCodeInput(e.target.value)} 
         />
         <button onClick={() => {
@@ -485,21 +577,28 @@ const handleEndSession = () => {
       </div>
     </div>
 
-    {/* 💬 CHATBOX WITH ROOM PROPS */}
-    <div className="card">
-      <div style={{ marginBottom: "10px" }}>
-        Current Room: <span className="badge">{roomId}</span>
+    {/* 💬 CHATBOX DISPLAY */}
+    <div className="card chat-wrapper">
+      <div style={{ marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontWeight: "bold", color: "#444" }}>Current Room:</span>
+          <span className="badge" style={{ fontSize: "1rem", padding: "5px 15px" }}>{roomId}</span>
+        </div>
+        {roomId.startsWith("STUDY_") ? (
+           <span style={{ color: "#28a745", fontSize: "0.85rem", fontWeight: "bold" }}>● PRIVATE SESSION</span>
+        ) : (
+           <span style={{ color: "#777", fontSize: "0.85rem" }}>● PUBLIC CHANNEL</span>
+        )}
       </div>
+      
       <ChatBox
         socket={socket}
         user={user?.name || "Anonymous"}
-        roomId={roomId} // 🚩 CRITICAL: Passing the roomId to the component
+        roomId={roomId}
       />
     </div>
   </div>
 )}
-
-
         {activeTab === "files" && <FileUploader token={token} />}
 
         {activeTab === "calendar" && (
