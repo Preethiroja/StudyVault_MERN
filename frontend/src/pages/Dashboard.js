@@ -50,7 +50,6 @@ const askTutor = async (noteId, question) => {
   const loadUserProfile = useCallback(async () => {
     if (!token) return;
     try {
-      // Points to http://localhost:5000/api/auth/me
       const res = await api.get("/auth/me", {
         headers: { Authorization: token },
       });
