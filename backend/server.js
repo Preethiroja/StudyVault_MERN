@@ -18,7 +18,8 @@ const io = new Server(server, {
 
 // ================= GLOBAL MIDDLEWARE =================
 app.use(cors({
-  origin: "https://study-vault-mern-t8dh.vercel.app"
+  origin: "https://study-vault-mern-t8dh.vercel.app",
+  credentials: true
 }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
