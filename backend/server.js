@@ -10,11 +10,16 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" },
+  cors: { 
+    origin: "https://study-vault-mern-t8dh.vercel.app", 
+    methods: ["GET", "POST"]
+  },
 });
 
 // ================= GLOBAL MIDDLEWARE =================
-app.use(cors());
+app.use(cors({
+  origin: "https://study-vault-mern-t8dh.vercel.app"
+}));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 

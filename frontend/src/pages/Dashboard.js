@@ -11,7 +11,7 @@ import "react-calendar/dist/Calendar.css";
 // Ensure this file exists in the same folder
 import "./Dashboard.css";
 import io from "socket.io-client";
-const socket = io("http://localhost:5000");
+const socket = io("https://studyvault-mern.onrender.com");
 
 export default function Dashboard({ token, logout }) {
   const [activeTab, setActiveTab] = useState("notes");
@@ -252,8 +252,8 @@ useEffect(() => {
   return () => {
     socket.off("chat-invite-received", handleChatInvite);
   };
-}, [user, socket]); // Runs only when user or socket instance changes
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [user]);
 
 // NEW: Update the End Session button handler
 const handleEndSession = () => {
