@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./Auth.css";
+import { api } from "../api";
 
 export default function Login({ setToken }) {
   const [email, setEmail] = useState("");
@@ -13,8 +14,7 @@ export default function Login({ setToken }) {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
-      
+      const res = await api.post("/auth/login", { email, password });            
       // Save data
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.user.name);

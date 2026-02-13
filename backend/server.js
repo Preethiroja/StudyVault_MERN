@@ -11,14 +11,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { 
-    origin: "https://study-vault-mern-t8dh.vercel.app", 
+    origin: "https://study-vault-mern.vercel.app", 
     methods: ["GET", "POST"]
   },
 });
 
 // ================= GLOBAL MIDDLEWARE =================
 app.use(cors({
-  origin: "https://study-vault-mern-t8dh.vercel.app",
+  origin: "https://study-vault-mern.vercel.app",
   credentials: true
 }));
 app.use(express.json());
